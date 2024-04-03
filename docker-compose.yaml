@@ -12,7 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - volume_postgres_db_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.dl/schema.sql
+#      - ./schema.sql:/docker-entrypoint-initdb.dl/schema.sql
     healthcheck:
       test: "pg_isready -U postgres | grep 'accepting connections' || exit 1"
       interval: 2s
