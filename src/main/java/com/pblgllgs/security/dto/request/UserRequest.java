@@ -1,4 +1,4 @@
-package com.pblgllgs.security.dtorequest;
+package com.pblgllgs.security.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Email;

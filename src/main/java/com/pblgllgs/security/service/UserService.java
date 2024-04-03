@@ -7,6 +7,7 @@ package com.pblgllgs.security.service;
  */
 
 import com.pblgllgs.security.entity.RoleEntity;
+import com.pblgllgs.security.enums.LoginType;
 
 public interface UserService {
 
@@ -15,4 +16,5 @@ public interface UserService {
     RoleEntity getRoleByName(String name);
 
     void verifyAccountKey(String key);
+    void updateLoginAttempt(String email, LoginType loginType);
 }

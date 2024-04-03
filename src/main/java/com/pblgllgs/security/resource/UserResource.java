@@ -1,7 +1,7 @@
 package com.pblgllgs.security.resource;
 
 import com.pblgllgs.security.domain.Response;
-import com.pblgllgs.security.dtorequest.UserRequest;
+import com.pblgllgs.security.dto.request.UserRequest;
 import com.pblgllgs.security.service.UserService;
 import com.pblgllgs.security.utils.RequestUtils;
 import jakarta.servlet.http.HttpServletRequest;

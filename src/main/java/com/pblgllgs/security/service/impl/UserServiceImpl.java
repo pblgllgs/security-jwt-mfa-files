@@ -6,12 +6,15 @@ package com.pblgllgs.security.service.impl;
  *
  */
 
+import com.pblgllgs.security.cache.CacheStore;
+import com.pblgllgs.security.domain.RequestContext;
 import com.pblgllgs.security.entity.ConfirmationEntity;
 import com.pblgllgs.security.entity.CredentialEntity;
 import com.pblgllgs.security.entity.RoleEntity;
 import com.pblgllgs.security.entity.UserEntity;
 import com.pblgllgs.security.enums.Authority;
 import com.pblgllgs.security.enums.EventType;
+import com.pblgllgs.security.enums.LoginType;
 import com.pblgllgs.security.event.UserEvent;
 import com.pblgllgs.security.exception.ApiException;
 import com.pblgllgs.security.repository.ConfirmationRepository;
@@ -26,6 +29,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -39,6 +43,7 @@ public class UserServiceImpl implements UserService {
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
     //    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final CacheStore<String,Integer> userCache;
     private final ApplicationEventPublisher publisher;
 
     @Override
@@ -64,6 +69,32 @@ public class UserServiceImpl implements UserService {
         userEntity.setEnabled(true);
         userRepository.save(userEntity);
         confirmationRepository.delete(confirmationEntity);
+    }
+
+    @Override
+    public void updateLoginAttempt(String email, LoginType loginType) {
+        UserEntity userEntity = getUserEntityByEmail(email);
+        RequestContext.setUserId(userEntity.getId());
+        switch (loginType){
+            case LOGIN_ATTEMPT -> {
+                if(userCache.get(userEntity.getEmail()) == null){
+                    userEntity.setLoginAttempts(0);
+                    userEntity.setAccountNotBlock(true);
+                }
+                userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
+                userCache.put(userEntity.getEmail(),userEntity.getLoginAttempts());
+                if (userCache.get(userEntity.getEmail())> 5){
+                    userEntity.setAccountNotBlock(false);
+                }
+            }
+            case  LOGIN_SUCCESS -> {
+                userEntity.setAccountNotBlock(true);
+                userEntity.setLoginAttempts(0);
+                userEntity.setLastLogin(LocalDateTime.now());
+                userCache.evict(userEntity.getEmail());
+            }
+        }
+        userRepository.save(userEntity);
     }
 
     private UserEntity getUserEntityByEmail(String email) {
