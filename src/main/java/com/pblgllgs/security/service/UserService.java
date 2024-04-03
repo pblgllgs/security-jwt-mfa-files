@@ -13,4 +13,6 @@ public interface UserService {
     void createUser(String firstName, String lastName, String email, String password);
 
     RoleEntity getRoleByName(String name);
+
+    void verifyAccountKey(String key);
 }
