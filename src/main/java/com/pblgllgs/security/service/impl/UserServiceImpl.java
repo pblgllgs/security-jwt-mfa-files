@@ -8,6 +8,7 @@ package com.pblgllgs.security.service.impl;
 
 import com.pblgllgs.security.cache.CacheStore;
 import com.pblgllgs.security.domain.RequestContext;
+import com.pblgllgs.security.dto.User;
 import com.pblgllgs.security.entity.ConfirmationEntity;
 import com.pblgllgs.security.entity.CredentialEntity;
 import com.pblgllgs.security.entity.RoleEntity;
@@ -95,6 +96,17 @@ public class UserServiceImpl implements UserService {
             }
         }
         userRepository.save(userEntity);
+    }
+
+    public User getUserByUserId(String userId) {
+        UserEntity userEntity = userRepository.getUserByUserId(userId).orElseThrow(() -> new ApiException("USER_NOT_FOUND"));
+        User user = new User();
+        user.setUserId(userEntity.getUserId());
+        user.setRole(userEntity.getRole().toString());
+        user.setFirstName(userEntity.getFirstName());
+        user.setLastName(userEntity.getLastName());
+        user.setEmail(userEntity.getEmail());
+        return user;
     }
 
     private UserEntity getUserEntityByEmail(String email) {

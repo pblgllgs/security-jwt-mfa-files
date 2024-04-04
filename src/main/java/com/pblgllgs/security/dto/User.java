@@ -7,7 +7,6 @@ package com.pblgllgs.security.dto;
  */
 
 
-import com.pblgllgs.security.entity.RoleEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

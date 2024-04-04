@@ -16,5 +16,5 @@ public class JwtConfiguration {
     private Long expiration;
 
     @Value("${jwt.secret}")
-    private Long secret;
+    private String secret;
 }
