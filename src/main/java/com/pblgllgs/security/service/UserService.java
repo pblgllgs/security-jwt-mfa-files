@@ -7,6 +7,7 @@ package com.pblgllgs.security.service;
  */
 
 import com.pblgllgs.security.dto.User;
+import com.pblgllgs.security.entity.CredentialEntity;
 import com.pblgllgs.security.entity.RoleEntity;
 import com.pblgllgs.security.entity.UserEntity;
 import com.pblgllgs.security.enums.LoginType;
@@ -22,4 +23,7 @@ public interface UserService {
     void updateLoginAttempt(String email, LoginType loginType);
 
     User getUserByUserId(String userId);
+    User getUserByEmail(String email);
+
+    CredentialEntity getUserCredentialById(Long id);
 }

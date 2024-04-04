@@ -7,6 +7,7 @@ package com.pblgllgs.security.service.impl;
  */
 
 import com.pblgllgs.security.cache.CacheStore;
+import com.pblgllgs.security.constant.Constants;
 import com.pblgllgs.security.domain.RequestContext;
 import com.pblgllgs.security.dto.User;
 import com.pblgllgs.security.entity.ConfirmationEntity;
@@ -27,11 +28,14 @@ import com.pblgllgs.security.utils.UserUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+
+import static com.pblgllgs.security.constant.Constants.*;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -43,8 +47,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
-    //    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final CacheStore<String,Integer> userCache;
+    private final CacheStore<String, Integer> userCache;
     private final ApplicationEventPublisher publisher;
 
     @Override
@@ -60,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public RoleEntity getRoleByName(String name) {
-        return roleRepository.findByNameIgnoreCase(name).orElseThrow(() -> new ApiException("ROLE_NOT_FOUND"));
+        return roleRepository.findByNameIgnoreCase(name).orElseThrow(() -> new ApiException(ROLE_NOT_FOUND));
     }
 
     @Override
@@ -76,19 +79,19 @@ public class UserServiceImpl implements UserService {
     public void updateLoginAttempt(String email, LoginType loginType) {
         UserEntity userEntity = getUserEntityByEmail(email);
         RequestContext.setUserId(userEntity.getId());
-        switch (loginType){
+        switch (loginType) {
             case LOGIN_ATTEMPT -> {
-                if(userCache.get(userEntity.getEmail()) == null){
+                if (userCache.get(userEntity.getEmail()) == null) {
                     userEntity.setLoginAttempts(0);
                     userEntity.setAccountNotBlock(true);
                 }
                 userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
-                userCache.put(userEntity.getEmail(),userEntity.getLoginAttempts());
-                if (userCache.get(userEntity.getEmail())> 5){
+                userCache.put(userEntity.getEmail(), userEntity.getLoginAttempts());
+                if (userCache.get(userEntity.getEmail()) > 5) {
                     userEntity.setAccountNotBlock(false);
                 }
             }
-            case  LOGIN_SUCCESS -> {
+            case LOGIN_SUCCESS -> {
                 userEntity.setAccountNotBlock(true);
                 userEntity.setLoginAttempts(0);
                 userEntity.setLastLogin(LocalDateTime.now());
@@ -98,28 +101,33 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
     }
 
+    @Override
     public User getUserByUserId(String userId) {
-        UserEntity userEntity = userRepository.getUserByUserId(userId).orElseThrow(() -> new ApiException("USER_NOT_FOUND"));
-        User user = new User();
-        user.setUserId(userEntity.getUserId());
-        user.setRole(userEntity.getRole().toString());
-        user.setFirstName(userEntity.getFirstName());
-        user.setLastName(userEntity.getLastName());
-        user.setEmail(userEntity.getEmail());
-        return user;
+        UserEntity userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        return UserUtils.fromUserEntity(userEntity,userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        UserEntity userEntity = getUserEntityByEmail(email);
+        return UserUtils.fromUserEntity(userEntity,userEntity.getRole(), getUserCredentialById(userEntity.getId()));
+    }
+
+    @Override
+    public CredentialEntity getUserCredentialById(Long userId) {
+        return credentialRepository.getCredentialByUserEntityId(userId).orElseThrow(() -> new ApiException(CREDENTIALS_NOT_FOUND));
     }
 
     private UserEntity getUserEntityByEmail(String email) {
-        return userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new ApiException("USER_NOT_FOUND"));
+        return userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     }
 
     private ConfirmationEntity getUserConfirmation(String key) {
-        return confirmationRepository.findByKey(key).orElseThrow(() -> new ApiException("CONFIRMATION_NOT_FOUND"));
+        return confirmationRepository.findByKey(key).orElseThrow(() -> new ApiException(CONFIRMATION_NOT_FOUND));
     }
 
     private UserEntity createNewUser(String firstName, String lastName, String email) {
-        var role = getRoleByName(Authority.USER.name());
+        RoleEntity role = getRoleByName(Authority.USER.name());
         return UserUtils.createUserEntity(firstName, lastName, email, role);
     }
-
 }
